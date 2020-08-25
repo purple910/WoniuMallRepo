@@ -24,6 +24,6 @@ def jinja2_environment(**options):
 ```
 ```
 TEMPLATES 
-    'environment': 'meiduo_mall.utils.jinja2_env.jinja2_environment'
+    'environment': 'woniumall.utils.jinja2_env.jinja2_environment'
 ```
 

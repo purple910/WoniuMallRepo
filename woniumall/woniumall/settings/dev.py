@@ -63,7 +63,7 @@ TEMPLATES = [
             ],
 
             # 补充Jinja2模板引擎环境
-            'environment': 'meiduo_mall.utils.jinja2_env.jinja2_environment',
+            'environment': 'woniumall.utils.jinja2_env.jinja2_environment',
         },
     },
 ]
