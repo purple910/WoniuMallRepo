@@ -155,7 +155,7 @@ LOGGING = {
     },
     'filters': {  # 对日志进行过滤
         'require_debug_true': {  # django在debug模式下才输出日志
-            '()': 'django.utils.logs.RequireDebugTrue',
+            '()': 'django.utils.log.RequireDebugTrue',
         },
     },
     'formatters': {  # 日志信息显示的格式
@@ -183,3 +183,6 @@ LOGGING = {
         },
     },
 }
+
+
+
