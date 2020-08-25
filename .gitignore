@@ -116,3 +116,6 @@ dmypy.json
 
 # PyCharm
 woniumall/.idea
+
+# Log
+woniumall/woniumall/log/*.log
