@@ -119,6 +119,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static', ]
 
 CACHES = {
     "default": {  # 默认
@@ -141,6 +142,7 @@ CACHES = {
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "session"
 
+# log
 LOGGING = {
     'version': 1,  # 设置 logging 配置的版本格式，目前只有 1 这个版本
     'disable_existing_loggers': False,  # 是否禁用已经存在的日志器
@@ -153,7 +155,7 @@ LOGGING = {
     },
     'filters': {  # 对日志进行过滤
         'require_debug_true': {  # django在debug模式下才输出日志
-            '()': 'django.utils.log.RequireDebugTrue',
+            '()': 'django.utils.logs.RequireDebugTrue',
         },
     },
     'formatters': {  # 日志信息显示的格式
@@ -174,7 +176,7 @@ LOGGING = {
         'file': {  # 向文件中输出日志
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs/woniu.log',  # 日志文件的位置
+            'filename': BASE_DIR.parent / 'logs/woniu.log',  # 日志文件的位置
             'maxBytes': 300 * 1024 * 1024,
             'backupCount': 10,
             'formatter': 'verbose'

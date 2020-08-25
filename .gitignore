@@ -118,4 +118,4 @@ dmypy.json
 woniumall/.idea
 
 # Log
-woniumall/woniumall/log/*.log
+woniumall/logs/*.log
