@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 
     'users',
     'contents',
+    'verifications'
 ]
 
 MIDDLEWARE = [
@@ -143,6 +144,13 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
+    "verify_code": {  # 图形验证码
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
 }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -192,4 +200,3 @@ LOGGING = {
 
 # 设置认证系统的用户模型类
 AUTH_USER_MODEL = 'users.User'
-
