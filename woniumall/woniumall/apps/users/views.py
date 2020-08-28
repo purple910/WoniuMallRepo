@@ -81,8 +81,13 @@ class RegisterView(View):
         # user = authenticate(username=username, password=password)
         login(request, user)
 
-        # 转发
-        return redirect('/')
+        # 响应登录结果
+        response = redirect('/')
+
+        # 登录时用户名写入到cookie，有效期15天
+        response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
+
+        return response
 
 
 class UsernameCountView(View):
@@ -113,4 +118,60 @@ class MobileCountView(View):
         return JsonResponse({'code': 'OK', 'errmsg': 'OK', 'count': count})
 
 
+class LoginView(View):
+    """用户名登录"""
 
+    def get(self, request):
+        """
+        提供登录界面
+        :param request: 请求对象
+        :return: 登录界面
+        """
+        return render(request, 'login.html')
+
+    def post(self, request):
+        """
+        实现登录逻辑
+        :param request: 请求对象
+        :return: 登录结果
+        """
+        # 接受参数
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        remembered = request.POST.get('remembered')
+
+        # 校验参数
+        # 判断参数是否齐全
+        if not all([username, password]):
+            return HttpResponseForbidden('缺少必传参数')
+
+        # 判断用户名是否是5-20个字符
+        if not re.match(r'^[a-zA-Z0-9_-]{5,20}$', username):
+            return HttpResponseForbidden('请输入正确的用户名或手机号')
+
+        # 判断密码是否是8-20个数字
+        if not re.match(r'^[0-9A-Za-z]{8,20}$', password):
+            return HttpResponseForbidden('密码最少8位，最长20位')
+
+        # 认证登录用户
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return render(request, 'login.html', {'account_errmsg': '用户名或密码错误'})
+
+        # 实现状态保持
+        login(request, user)
+        # 设置状态保持的周期
+        if remembered != 'on':
+            # 没有记住用户：浏览器会话结束就过期
+            request.session.set_expiry(0)
+        else:
+            # 记住用户：None表示两周后过期
+            request.session.set_expiry(None)
+
+        # 响应登录结果
+        response = redirect('/')
+
+        # 登录时用户名写入到cookie，有效期15天
+        response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
+
+        return response
