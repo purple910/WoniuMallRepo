@@ -1,6 +1,6 @@
 import re
 
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.db import DatabaseError
 from django.db.models import QuerySet
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
@@ -175,3 +175,19 @@ class LoginView(View):
         response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
 
         return response
+
+
+class LogoutView(View):
+    """退出登录"""
+
+    def get(self, request):
+        """实现退出登录逻辑"""
+        # 清理session
+        logout(request)
+        # 退出登录，重定向到登录页
+        response = redirect('/')
+        # 退出登录时清除cookie中的username
+        response.delete_cookie('username')
+
+        return response
+
