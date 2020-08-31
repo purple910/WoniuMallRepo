@@ -13,6 +13,7 @@ from django.views import View
 from django_redis import get_redis_connection
 
 from users.models import User
+from woniumall.utils.response_code import RETCODE
 
 
 class RegisterView(View):
@@ -110,7 +111,7 @@ class UsernameCountView(View):
         """
         count = User.objects.filter(username=username).count()
         # print('1111111')
-        return JsonResponse({'code': 'OK', 'errmsg': 'OK', 'count': count})
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'count': count})
 
 
 class MobileCountView(View):
@@ -123,7 +124,7 @@ class MobileCountView(View):
         :return: JSON
         """
         count = User.objects.filter(mobile=mobile).count()
-        return JsonResponse({'code': 'OK', 'errmsg': 'OK', 'count': count})
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'count': count})
 
 
 class LoginView(View):
@@ -224,7 +225,7 @@ class EmailView(View):
         """实现添加邮箱逻辑"""
         # 判断用户是否登录并返回JSON
         if not request.user.is_authenticated:
-            return JsonResponse({'code': 'SESSIONERR', 'errmsg': '用户未登录'})
+            return JsonResponse({'code': RETCODE.SESSIONERR, 'errmsg': '用户未登录'})
 
         # 接收参数
         json_dict = json.loads(request.body.decode())
@@ -243,11 +244,11 @@ class EmailView(View):
             request.user.save()
         except Exception as e:
             logger.error(e)
-            return JsonResponse({'code': 'DBERR', 'errmsg': '添加邮箱失败'})
+            return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '添加邮箱失败'})
 
         # TODO 发送邮箱验证邮件
 
         # 响应添加邮箱结果
-        return JsonResponse({'code': 'OK', 'errmsg': '添加邮箱成功'})
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': '添加邮箱成功'})
 
 
