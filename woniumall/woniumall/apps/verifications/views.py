@@ -1,4 +1,7 @@
-from django.http import HttpRequest, HttpResponse
+import random
+from venv import logger
+
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 
 # Create your views here.
@@ -7,6 +10,7 @@ from django_redis import get_redis_connection
 from redis import StrictRedis
 
 from woniumall.libs.captcha.captcha import captcha
+from woniumall.libs.ronglian_sms_sdk.SendMessage import send_message
 from woniumall.utils import constants
 
 
@@ -30,3 +34,54 @@ class ImageCodeView(View):
 
         # 响应图片验证码
         return HttpResponse(image, content_type='image/jpg')
+
+
+class SMSCodeView(View):
+    """短信验证码"""
+
+    def get(self, reqeust, mobile):
+        """
+        :param reqeust: 请求对象
+        :param mobile: 手机号
+        :return: JSON
+        """
+        # 接收参数
+        image_code_client = reqeust.GET.get('image_code')
+        uuid = reqeust.GET.get('uuid')
+
+        # 校验参数
+        if not all([image_code_client, uuid]):
+            return JsonResponse({'code': 'NECESSARYPARAMERR', 'errmsg': '缺少必传参数'})
+
+        # 创建连接到redis的对象
+        redis_conn = get_redis_connection('verify_code')
+        # 提取图形验证码
+        image_code_server = redis_conn.get(uuid)
+        if image_code_server is None:
+            # 图形验证码过期或者不存在
+            return JsonResponse({'code': 'IMAGECODEERR', 'errmsg': '图形验证码失效'})
+        # 删除图形验证码，避免恶意测试图形验证码
+        try:
+            redis_conn.delete(uuid)
+        except Exception as e:
+            logger.error(e)
+        # 对比图形验证码
+        image_code_server = image_code_server.decode()  # bytes转字符串
+        if image_code_client.lower() != image_code_server.lower():  # 转小写后比较
+            return JsonResponse({'code': 'IMAGECODEERR', 'errmsg': '输入图形验证码有误'})
+
+        # 创建 sms 的redis
+        redis_conn = get_redis_connection('sms_code')
+        # 生成短信验证码：生成6位数验证码
+        # sms_code = '{%06d}' % random.randint(0, 999999)
+        sms_code = '{:06d}'.format(random.randint(0, 999999))
+        # logger.info(sms_code)
+        # 保存短信验证码
+        redis_conn.set(mobile, sms_code, ex=constants.SMS_CODE_REDIS_EXPIRES)
+        # 发送短信验证码
+        message = send_message(mobile, sms_code)
+        if not message:
+            return JsonResponse({'code': 'ERROR', 'errmsg': '发送短信失败'})
+
+        # 响应结果
+        return JsonResponse({'code': '0', 'errmsg': '发送短信成功'})

@@ -9,8 +9,8 @@ from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect
 
 # Create your views here.
-from django.urls import reverse
 from django.views import View
+from django_redis import get_redis_connection
 
 from users.models import User
 
@@ -71,7 +71,13 @@ class RegisterView(View):
         if User.objects.filter(mobile=mobile).count() > 0:
             return HttpResponseForbidden("手机号重复")
 
-        # TODO 校验短信验证码
+        # 校验短信验证码
+        redis_conn = get_redis_connection('sms_code')
+        sms_code_server = redis_conn.get(mobile)
+        if sms_code_server is None:
+            return render(request, 'register.html', {'sms_code_errmsg': '无效的短信验证码'})
+        if sms_code != sms_code_server.decode():
+            return render(request, 'register.html', {'sms_code_errmsg': '输入短信验证码有误'})
 
         # 保存注册数据
         try:
