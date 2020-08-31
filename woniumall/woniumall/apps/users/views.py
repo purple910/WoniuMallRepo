@@ -1,4 +1,6 @@
+import json
 import re
+from venv import logger
 
 from django.contrib.auth import authenticate, login, logout
 from django.db import DatabaseError
@@ -208,5 +210,38 @@ class UserInfoView(View):
         else:
             return redirect('/login/')
 
+
+class EmailView(View):
+    """添加邮箱"""
+
+    def put(self, request):
+        """实现添加邮箱逻辑"""
+        # 判断用户是否登录并返回JSON
+        if not request.user.is_authenticated:
+            return JsonResponse({'code': 'SESSIONERR', 'errmsg': '用户未登录'})
+
+        # 接收参数
+        json_dict = json.loads(request.body.decode())
+        email = json_dict.get('email')
+
+        # 校验参数
+        if not email:
+            return HttpResponseForbidden('缺少email参数')
+        if not re.match(r'^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+', email):
+            # if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+            return HttpResponseForbidden('参数email有误')
+
+        # 赋值email字段
+        try:
+            request.user.email = email
+            request.user.save()
+        except Exception as e:
+            logger.error(e)
+            return JsonResponse({'code': 'DBERR', 'errmsg': '添加邮箱失败'})
+
+        # TODO 发送邮箱验证邮件
+
+        # 响应添加邮箱结果
+        return JsonResponse({'code': 'OK', 'errmsg': '添加邮箱成功'})
 
 
