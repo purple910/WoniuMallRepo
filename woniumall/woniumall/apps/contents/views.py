@@ -8,4 +8,4 @@ class HomeView(View):
     """首页"""
 
     def get(self, request):
-        return render(request, "index.html")
+        return render(request, 'index.html')
