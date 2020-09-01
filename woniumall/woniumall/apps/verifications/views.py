@@ -9,6 +9,7 @@ from django.views import View
 from django_redis import get_redis_connection
 from redis import StrictRedis
 
+from celery_tasks.sms.tasks import send_sms_verification_code
 from woniumall.libs.captcha.captcha import captcha
 from woniumall.libs.ronglian_sms_sdk.SendMessage import send_message
 from woniumall.utils import constants
@@ -99,9 +100,10 @@ class SMSCodeView(View):
         pipeline.execute()
 
         # 发送短信验证码
-        message = send_message(mobile, sms_code)
-        if not message:
-            return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '发送短信失败'})
+        # message = send_message(mobile, sms_code)
+        # if not message:
+        #     return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '发送短信失败'})
 
         # 响应结果
+        send_sms_verification_code.delay(mobile, sms_code)
         return JsonResponse({'code': RETCODE.OK, 'errmsg': '发送短信成功'})
