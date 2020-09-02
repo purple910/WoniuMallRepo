@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'users',
     'contents',
     'verifications',
+    'areas'
 ]
 
 MIDDLEWARE = [
@@ -207,3 +208,5 @@ LOGGING = {
 
 # 设置认证系统的用户模型类
 AUTH_USER_MODEL = 'users.User'
+# 指定自定义的用户认证后端
+AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend', 'users.auth_backend.MobilePasswordBackend']
