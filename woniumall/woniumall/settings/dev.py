@@ -210,3 +210,6 @@ LOGGING = {
 AUTH_USER_MODEL = 'users.User'
 # 指定自定义的用户认证后端
 AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend', 'users.auth_backend.MobilePasswordBackend']
+
+# 未登录默认被重定向到setting.LOGIN_URL配置项指定的地址
+LOGIN_URL = '/login/'

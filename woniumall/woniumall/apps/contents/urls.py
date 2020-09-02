@@ -10,5 +10,5 @@ from django.urls import re_path
 from contents import views
 
 urlpatterns = [
-    re_path(r'^$', views.HomeView.as_view())
+    re_path(r'^$', views.HomeView.as_view(), name='index')
 ]

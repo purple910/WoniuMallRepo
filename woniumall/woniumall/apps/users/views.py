@@ -10,6 +10,7 @@ from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect
 
 # Create your views here.
+from django.urls import reverse
 from django.views import View
 from django_redis import get_redis_connection
 
@@ -170,6 +171,7 @@ class LoginView(View):
 
         # 实现状态保持
         login(request, user)
+
         # 设置状态保持的周期
         if remembered != 'on':
             # 没有记住用户：浏览器会话结束就过期
@@ -179,10 +181,21 @@ class LoginView(View):
             request.session.set_expiry(None)
 
         # 响应登录结果
-        response = redirect('/')
+        # response = redirect('/')
+        # 判断是否是去首页
+        # http://127.0.0.1:8000/login/?next=/info/ 实际上要在登陆后跳转到info页面
+        next = request.GET.get('next')
+        if next:
+            response = redirect(next)
+        else:
+            response = redirect(reverse('contents:index'))
 
-        # 登录时用户名写入到cookie，有效期15天
-        response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
+        if remembered != 'on':
+            # 设置cookie 为关闭浏览器则有效期结束
+            response.set_cookie('username', user.username)
+        else:
+            # 登录时用户名写入到cookie，有效期14天
+            response.set_cookie('username', user.username, max_age=3600 * 24 * 14)
 
         return response
 
@@ -202,21 +215,32 @@ class LogoutView(View):
         return response
 
 
-class UserInfoView(View):
+class UserInfoView(LoginRequiredMixin, View):
     """用户中心"""
+
+    # def get(self, request):
+    #     """提供个人信息界面"""
+    #     if request.user.is_authenticated:
+    #         context = {
+    #             'username': request.user.username,
+    #             'mobile': request.user.mobile,
+    #             'email': request.user.email,
+    #             'email_active': request.user.email_active
+    #         }
+    #         return render(request, 'user_center_info.html', context=context)
+    #     else:
+    #         # return redirect('/login/')
+    #         return redirect(reverse('users:login'))
 
     def get(self, request):
         """提供个人信息界面"""
-        if request.user.is_authenticated:
-            context = {
-                'username': request.user.username,
-                'mobile': request.user.mobile,
-                'email': request.user.email,
-                'email_active': request.user.email_active
-            }
-            return render(request, 'user_center_info.html', context=context)
-        else:
-            return redirect('/login/')
+        context = {
+            'username': request.user.username,
+            'mobile': request.user.mobile,
+            'email': request.user.email,
+            'email_active': request.user.email_active
+        }
+        return render(request, 'user_center_info.html', context=context)
 
 
 class EmailView(View):
@@ -274,7 +298,7 @@ class ChangePasswordView(LoginRequiredMixin, View):
             request.user.check_password(old_password)
         except Exception as e:
             logger.error(e)
-            return render(request, 'user_center_pass.html', {'origin_pwd_errmsg':'原始密码错误'})
+            return render(request, 'user_center_pass.html', {'origin_pwd_errmsg': '原始密码错误'})
         if not re.match(r'^[0-9A-Za-z]{8,20}$', new_password):
             return HttpResponseForbidden('密码最少8位，最长20位')
         if new_password != new_password2:
