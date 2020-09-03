@@ -28,3 +28,10 @@ class MobilePasswordBackend(BaseBackend):
 
         if user.check_password(password):
             return user
+
+    def get_user(self, user_id):
+        try:
+            user = UserModel.objects.get(pk=user_id)
+        except UserModel.DoesNotExist:
+            return None
+        return user

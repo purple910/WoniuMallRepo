@@ -82,4 +82,4 @@ class MobilePasswordBackend(BaseBackend):
 5 没有找到, 返回循环 _get_backends(return_tuples=True)
 6 再到 users.auth_backend.MobilePasswordBackend里, 用mobile在数据里找
 ```
-
+## 如果没有认证用户(authenticate),则实现状态保持(login)时要指定认证后端(backend)

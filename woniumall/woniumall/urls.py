@@ -22,6 +22,6 @@ urlpatterns = [
     re_path(r'^', include(('contents.urls', 'contents'))),
     re_path(r'^', include('verifications.urls')),
     re_path(r'^', include(('areas.urls', 'areas'))),
-    re_path(r'^oauth/', include('oauth.urls'))
+    re_path(r'^', include('oauth.urls'))
 
 ]

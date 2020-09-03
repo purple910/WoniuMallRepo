@@ -90,7 +90,7 @@ class RegisterView(View):
 
         # 用户登录,保持session 用户注册不用再登录
         # user = authenticate(username=username, password=password)
-        login(request, user)
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
         # 响应登录结果
         response = redirect('/')

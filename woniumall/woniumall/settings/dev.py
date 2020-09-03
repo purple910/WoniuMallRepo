@@ -27,7 +27,7 @@ SECRET_KEY = 'yr$-i@ra(3p+t!$c6ro1poft^)bt5_80_qa67r3@c%9a9z96di'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -218,4 +218,4 @@ LOGIN_URL = '/login/'
 # 配置QQ登录参数
 QQ_CLIENT_ID = '101518219'
 QQ_CLIENT_SECRET = '418d84ebdc7241efb79536886ae95224'
-QQ_REDIRECT_URI = 'http://www.woniu.com:8000/oauth_callback/'
+QQ_REDIRECT_URI = 'http://www.meiduo.site:8000/oauth_callback'

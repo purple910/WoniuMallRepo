@@ -100,10 +100,15 @@ class SMSCodeView(View):
         pipeline.execute()
 
         # 发送短信验证码
-        # message = send_message(mobile, sms_code)
-        # if not message:
-        #     return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '发送短信失败'})
+        message = send_message(mobile, sms_code)
+        if not message:
+            return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '发送短信失败'})
 
-        # 响应结果
-        send_sms_verification_code.delay(mobile, sms_code)
-        return JsonResponse({'code': RETCODE.OK, 'errmsg': '发送短信成功'})
+        # 响应结果 异步发送
+        # celery worker -A celery_tasks.main -l info -P eventlet
+        # send_sms_verification_code.delay(mobile, sms_code)
+
+        response = JsonResponse({'code': RETCODE.OK, 'errmsg': '发送短信成功'})
+        # 设置响应头信息, 使其可以跨域
+        response["Access-Control-Allow-Origin"] = '*'
+        return response

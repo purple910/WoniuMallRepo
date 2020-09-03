@@ -3,7 +3,7 @@ from venv import logger
 
 from QQLoginTool.QQtool import OAuthQQ
 from django.contrib.auth import login
-from django.core.signing import Signer
+# from django.core.signing import Signer
 from django.db import DatabaseError
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponseServerError, HttpRequest
 from django.shortcuts import render, redirect
@@ -14,6 +14,7 @@ from django.views import View
 from django_redis import get_redis_connection
 
 from oauth.models import OAuthQQUser
+from oauth.utils import Signer
 from users.models import User
 from woniumall.settings import dev
 from woniumall.utils import constants
@@ -74,7 +75,8 @@ class QQAuthUserView(View):
             # 如果openid已绑定蜗牛商城用户
             # 实现状态保持
             qq_user = oauth_user.user
-            login(request, qq_user)
+            # 没有认证登录用户,则要自定义backend
+            login(request, qq_user, backend='django.contrib.auth.backends.ModelBackend')
 
             # 响应结果
             # next = request.GET.get('state', '/')
@@ -90,11 +92,12 @@ class QQAuthUserView(View):
 
     def post(self, request: HttpRequest):
         """绑定蜗牛商城用户和openid"""
+        # http://www.meiduo.site:8000/oauth_callback/?code=DC72C8A28F03EC1B577360FB6E8FBA95&state=%2F
         # 提取数据
+        access_token = request.POST.get('access_token')
         mobile = request.POST.get("mobile")
         password = request.POST.get("password")
         sms_code = request.POST.get("sms_code")
-        access_token = request.POST.get("access_token")
         state = request.GET.get("state")
 
         # 校验数据
@@ -122,8 +125,8 @@ class QQAuthUserView(View):
         open_id = Signer.unsign(access_token)
         if open_id is None:
             return render(request, 'oauth_callback.html', {'openid_errmsg': '无效的openid'})
-        else:
-            open_id = open_id["open_id"]
+        # else:
+        # open_id = open_id["open_id"]
 
         # 处理逻辑
         try:
@@ -143,7 +146,7 @@ class QQAuthUserView(View):
             return render(request, 'oauth_callback.html', {'qq_login_errmsg': 'QQ登录失败'})
 
         # 登陆状态保持
-        login(request, user)
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
         response = redirect(state)
         # 登陆时把用户名写入 cookie
         response.set_cookie("username", user.username, expires=constants.USERNAME_COOKIE_EXPIRES)
