@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'users',
     'contents',
     'verifications',
-    'areas'
+    'areas',
+    'oauth'
 ]
 
 MIDDLEWARE = [
@@ -213,3 +214,8 @@ AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend', 'users.a
 
 # 未登录默认被重定向到setting.LOGIN_URL配置项指定的地址
 LOGIN_URL = '/login/'
+
+# 配置QQ登录参数
+QQ_CLIENT_ID = '101518219'
+QQ_CLIENT_SECRET = '418d84ebdc7241efb79536886ae95224'
+QQ_REDIRECT_URI = 'http://www.woniu.com:8000/oauth_callback/'
