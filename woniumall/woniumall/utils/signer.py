@@ -6,8 +6,9 @@
     @Software: PyCharm
 """
 from django.conf import settings
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, BadSignature
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, BadSignature, BadData
 
+from users.models import User
 from woniumall.utils import constants
 
 
@@ -36,3 +37,24 @@ class Signer(object):
         except BadSignature:
             obj = None
         return obj
+
+
+def check_verify_email_token(token):
+    """
+    验证token并提取user
+    :param token: 用户信息签名后的结果
+    :return: user, None
+    """
+    serializer = Serializer(settings.SECRET_KEY, expires_in=constants.VERIFY_EMAIL_TOKEN_EXPIRES)
+    try:
+        data = serializer.loads(token)
+    except BadData:
+        return None
+    else:
+        user_id = data.get('user_id')
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return None
+        else:
+            return user

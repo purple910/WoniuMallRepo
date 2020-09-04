@@ -22,8 +22,10 @@ urlpatterns = [
     # 装饰器 login_required, 使其在未登录时跳转到登录界面,后再跳转到info页面
     # re_path(r'^info/$', login_required(views.UserInfoView.as_view())),
     # 继承 LoginRequiredMixin ,使其在未登录时跳转到登录界面,后再跳转到info页面
-    re_path(r'^info/$', views.UserInfoView.as_view()),
+    re_path(r'^info/$', views.UserInfoView.as_view(), name='info'),
 
     re_path(r'^emails/$', views.EmailView.as_view()),
+    re_path(r'^emails/verification/$', views.VerifyEmailView.as_view()),
+
     re_path(r'^password/$', views.ChangePasswordView.as_view()),
 ]

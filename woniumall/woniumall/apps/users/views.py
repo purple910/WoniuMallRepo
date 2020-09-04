@@ -2,11 +2,14 @@ import json
 import re
 from venv import logger
 
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.mail import send_mail
 from django.db import DatabaseError
 from django.db.models import QuerySet
-from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest, \
+    HttpResponseServerError
 from django.shortcuts import render, redirect
 
 # Create your views here.
@@ -15,7 +18,9 @@ from django.views import View
 from django_redis import get_redis_connection
 
 from users.models import User
+from woniumall.utils.mixin import LoginRequireJsonMixin
 from woniumall.utils.response_code import RETCODE
+from woniumall.utils.signer import Signer, check_verify_email_token
 
 
 class RegisterView(View):
@@ -243,14 +248,14 @@ class UserInfoView(LoginRequiredMixin, View):
         return render(request, 'user_center_info.html', context=context)
 
 
-class EmailView(View):
+class EmailView(LoginRequireJsonMixin, View):
     """添加邮箱"""
 
     def put(self, request):
         """实现添加邮箱逻辑"""
         # 判断用户是否登录并返回JSON
-        if not request.user.is_authenticated:
-            return JsonResponse({'code': RETCODE.SESSIONERR, 'errmsg': '用户未登录'})
+        # if not request.user.is_authenticated:
+        #     return JsonResponse({'code': RETCODE.SESSIONERR, 'errmsg': '用户未登录'})
 
         # 接收参数
         json_dict = json.loads(request.body.decode())
@@ -259,8 +264,8 @@ class EmailView(View):
         # 校验参数
         if not email:
             return HttpResponseForbidden('缺少email参数')
-        if not re.match(r'^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+', email):
-            # if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+        # if not re.match(r'^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+', email):
+        if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
             return HttpResponseForbidden('参数email有误')
 
         # 赋值email字段
@@ -271,10 +276,49 @@ class EmailView(View):
             logger.error(e)
             return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '添加邮箱失败'})
 
-        # TODO 发送邮箱验证邮件
+        # 发送邮箱验证邮件
+        verify_url = settings.EMAIL_VERIFY_URL + '?token=' + Signer.sign({"user_id": request.user.id})
+
+        subject = "蜗牛商城邮箱验证"
+        message = ""
+        from_email = settings.EMAIL_FROM
+        recipient_list = [email]
+        html_message = '<p>尊敬的用户您好！</p>' \
+                       '<p>感谢您使用蜗牛商城。</p>' \
+                       '<p>您的邮箱为：%s 。请点击此链接激活您的邮箱：</p>' \
+                       '<p><a href="%s">%s<a></p>' % (email, verify_url, verify_url)
+        send_mail(subject=subject, message=message, from_email=from_email, recipient_list=recipient_list, html_message=html_message)
 
         # 响应添加邮箱结果
         return JsonResponse({'code': RETCODE.OK, 'errmsg': '添加邮箱成功'})
+
+
+class VerifyEmailView(View):
+    """验证邮箱"""
+
+    def get(self, request):
+        """实现邮箱验证逻辑"""
+        # 接收参数
+        token = request.GET.get('token')
+
+        # 校验参数：判断token是否为空和过期，提取user
+        if not token:
+            return HttpResponseBadRequest('缺少token')
+
+        user = check_verify_email_token(token)
+        if not user:
+            return HttpResponseForbidden('无效的token')
+
+        # 修改email_active的值为True
+        try:
+            user.email_active = True
+            user.save()
+        except Exception as e:
+            logger.error(e)
+            return HttpResponseServerError('激活邮件失败')
+
+        # 返回邮箱验证结果
+        return redirect(reverse('users:info'))
 
 
 class ChangePasswordView(LoginRequiredMixin, View):
