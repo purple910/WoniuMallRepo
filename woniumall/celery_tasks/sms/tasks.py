@@ -14,9 +14,16 @@ from woniumall.libs.ronglian_sms_sdk.SendMessage import send_message
 
 
 @app.task(name="send_sms_verification_code", bind=True, retry_backoff=3)
-def send_sms_verification_code(self, moblie, sms_code):
+def send_sms_verification_code(self, mobile, sms_code):
+    """
+
+    :param self:
+    :param mobile:
+    :param sms_code:
+    :return:
+    """
     try:
-        message = send_message(moblie, sms_code)
+        message = send_message(mobile, sms_code)
     except Exception as e:
         raise self.retry(exc=e, max_retries=3)
 

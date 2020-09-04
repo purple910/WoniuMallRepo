@@ -17,10 +17,11 @@ from django.urls import reverse
 from django.views import View
 from django_redis import get_redis_connection
 
+from celery_tasks.email.tasks import send_verify_email
 from users.models import User
 from woniumall.utils.mixin import LoginRequireJsonMixin
 from woniumall.utils.response_code import RETCODE
-from woniumall.utils.signer import Signer, check_verify_email_token
+from woniumall.utils.signer import Signer, check_verify_email_token, generate_verify_email_url
 
 
 class RegisterView(View):
@@ -278,7 +279,6 @@ class EmailView(LoginRequireJsonMixin, View):
 
         # 发送邮箱验证邮件
         verify_url = settings.EMAIL_VERIFY_URL + '?token=' + Signer.sign({"user_id": request.user.id})
-
         subject = "蜗牛商城邮箱验证"
         message = ""
         from_email = settings.EMAIL_FROM
@@ -287,7 +287,12 @@ class EmailView(LoginRequireJsonMixin, View):
                        '<p>感谢您使用蜗牛商城。</p>' \
                        '<p>您的邮箱为：%s 。请点击此链接激活您的邮箱：</p>' \
                        '<p><a href="%s">%s<a></p>' % (email, verify_url, verify_url)
-        send_mail(subject=subject, message=message, from_email=from_email, recipient_list=recipient_list, html_message=html_message)
+        send_mail(subject=subject, message=message, from_email=from_email, recipient_list=recipient_list,
+                  html_message=html_message)
+
+        # 异步发送验证邮件
+        # verify_url = generate_verify_email_url(request.user.id)
+        # send_verify_email.delay(email, verify_url)
 
         # 响应添加邮箱结果
         return JsonResponse({'code': RETCODE.OK, 'errmsg': '添加邮箱成功'})

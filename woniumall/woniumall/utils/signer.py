@@ -58,3 +58,15 @@ def check_verify_email_token(token):
             return None
         else:
             return user
+
+
+def generate_verify_email_url(user_id):
+    """
+    根据 user_id 产生验证邮箱的 URL
+    :param user_id:
+    :return:
+    """
+    data = {"user_id": user_id}
+    token = Signer.sign(data)
+    url = settings.EMAIL_VERIFY_URL + "?token=" + token
+    return url
