@@ -9,12 +9,11 @@ from django.http import JsonResponse, HttpResponseForbidden, HttpResponseServerE
 from django.shortcuts import render, redirect
 
 # Create your views here.
-from django.urls import reverse
 from django.views import View
 from django_redis import get_redis_connection
 
 from oauth.models import OAuthQQUser
-from oauth.utils import Signer
+from woniumall.utils.signer import Signer
 from users.models import User
 from woniumall.settings import dev
 from woniumall.utils import constants
@@ -79,11 +78,11 @@ class QQAuthUserView(View):
             login(request, qq_user, backend='django.contrib.auth.backends.ModelBackend')
 
             # 响应结果
-            # next = request.GET.get('state', '/')
-            # response = redirect(next)
+            next = request.GET.get('state', '/')
+            response = redirect(next)
 
             # 重定向到主页
-            response = redirect(reverse('contents:index'))
+            # response = redirect(reverse('contents:index'))
 
             # 登录时用户名写入到cookie，有效期15天
             response.set_cookie('username', qq_user.username, max_age=3600 * 24 * 15)
