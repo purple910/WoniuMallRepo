@@ -28,4 +28,7 @@ urlpatterns = [
     re_path(r'^emails/verification/$', views.VerifyEmailView.as_view()),
 
     re_path(r'^password/$', views.ChangePasswordView.as_view()),
+
+    re_path(r'^addresses/$', views.AddressView.as_view(), name='addresses'),
+    re_path(r'^areas/$', views.AreasView.as_view()),
 ]

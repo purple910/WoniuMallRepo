@@ -2,14 +2,16 @@ import json
 import re
 from venv import logger
 
+from django import http
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 from django.core.mail import send_mail
 from django.db import DatabaseError
 from django.db.models import QuerySet
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest, \
-    HttpResponseServerError
+    HttpResponseServerError, HttpRequest
 from django.shortcuts import render, redirect
 
 # Create your views here.
@@ -18,7 +20,8 @@ from django.views import View
 from django_redis import get_redis_connection
 
 from celery_tasks.email.tasks import send_verify_email
-from users.models import User
+from users.models import User, Area, Address
+from woniumall.utils import constants
 from woniumall.utils.mixin import LoginRequireJsonMixin
 from woniumall.utils.response_code import RETCODE
 from woniumall.utils.signer import Signer, check_verify_email_token, generate_verify_email_url
@@ -368,3 +371,100 @@ class ChangePasswordView(LoginRequiredMixin, View):
 
         # # 响应密码修改结果：重定向到登录界面
         return response
+
+
+class AddressView(LoginRequiredMixin, View):
+    """用户收货地址"""
+
+    def get(self, request):
+        """提供收货地址界面"""
+        # 获取用户地址列表
+        login_user = request.user
+        addresses = Address.objects.filter(user=login_user, is_deleted=False)
+
+        address_dict_list = []
+        for address in addresses:
+            address_dict = {
+                "id": address.id,
+                "title": address.title,
+                "receiver": address.receiver,
+                "province": address.province.name,
+                "province_id": address.province_id,
+                "city": address.city.name,
+                "city_id": address.city_id,
+                "district": address.district.name,
+                "district_id": address.district_id,
+                "place": address.place,
+                "mobile": address.mobile,
+                "tel": address.tel,
+                "email": address.email
+            }
+
+        context = {
+            'default_address_id': login_user.default_address_id,
+            'addresses': address_dict_list,
+        }
+
+        return render(request, 'user_center_site.html', context)
+
+
+class AreasView(View):
+    """省市区数据"""
+
+    def get(self, request):
+        """提供省市区数据"""
+        area_id = request.GET.get('area_id')
+
+        if not area_id:
+            # 缓存
+            province_list = cache.get("province_list")
+
+            # 提供省份数据
+            if province_list is None:
+                try:
+                    # 查询省份数据
+                    province_model_list = Area.objects.filter(parent__isnull=True)
+
+                    # 序列化省级数据
+                    province_list = []
+                    for province_model in province_model_list:
+                        province_list.append({'id': province_model.id, 'name': province_model.name})
+                except Exception as e:
+                    logger.error(e)
+                    return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '省份数据错误'})
+
+                # 添加缓存
+                cache.set("province_list", province_list, constants.AREA_CACHE_EXPIRES)
+
+            # 响应省份数据
+            return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'province_list': province_list})
+        else:
+            # 读取市或区缓存数据
+            sub_data = cache.get('sub_area_' + area_id)
+
+            if not sub_data:
+                # 提供市或区数据
+                try:
+                    parent_model = Area.objects.get(id=area_id)  # 查询市或区的父级
+                    sub_model_list = parent_model.subs.all()
+
+                    # 序列化市或区数据
+                    sub_list = []
+                    for sub_model in sub_model_list:
+                        sub_list.append({'id': sub_model.id, 'name': sub_model.name})
+
+                    sub_data = {
+                        'id': parent_model.id,  # 父级pk
+                        'name': parent_model.name,  # 父级name
+                        'subs': sub_list  # 父级的子集
+                    }
+                except Exception as e:
+                    logger.error(e)
+                    return JsonResponse({'code': RETCODE.DBERR, 'errmsg': '城市或区数据错误'})
+                # 储存市或区缓存数据
+                cache.set('sub_area_' + area_id, sub_data, constants.AREA_CACHE_EXPIRES)
+
+            # 响应市或区数据
+            return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'sub_data': sub_data})
+
+
