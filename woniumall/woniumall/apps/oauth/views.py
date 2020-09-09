@@ -5,7 +5,7 @@ from QQLoginTool.QQtool import OAuthQQ
 from django.contrib.auth import login
 # from django.core.signing import Signer
 from django.db import DatabaseError
-from django.http import JsonResponse, HttpResponseForbidden, HttpResponseServerError, HttpRequest
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponseServerError, HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 
 # Create your views here.
@@ -34,15 +34,15 @@ class QQAuthURLView(View):
                         redirect_uri=dev.QQ_REDIRECT_URI, state=next)
         login_url = oauth.get_qq_url()
 
-        return JsonResponse({'code': RETCODE.OK,
-                             'errmsg': 'OK',
-                             'login_url': login_url})
+        response = JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'login_url': login_url})
+        response["Access-Control-Allow-Origin"] = '*'
+        return response
 
 
 class QQAuthUserView(View):
     """用户扫码登录的回调处理"""
 
-    def get(self, request):
+    def get(self, request:HttpRequest):
         """Oauth2.0认证"""
         # 接收Authorization Code
         code = request.GET.get('code')
@@ -79,14 +79,15 @@ class QQAuthUserView(View):
 
             # 响应结果
             next = request.GET.get('state', '/')
-            response = redirect(next)
+            response:HttpResponse = redirect(next)
 
             # 重定向到主页
             # response = redirect(reverse('contents:index'))
 
             # 登录时用户名写入到cookie，有效期15天
             response.set_cookie('username', qq_user.username, max_age=3600 * 24 * 15)
-
+            # response["Access-Control-Allow-Origin"] = '*'
+            # request.META.get('HTTP_HOST')
             return response
 
     def post(self, request: HttpRequest):
@@ -146,9 +147,10 @@ class QQAuthUserView(View):
 
         # 登陆状态保持
         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+
         response = redirect(state)
         # 登陆时把用户名写入 cookie
         response.set_cookie("username", user.username, expires=constants.USERNAME_COOKIE_EXPIRES)
-
+        # response["Access-Control-Allow-Origin"] = '*'
         # 响应
         return response

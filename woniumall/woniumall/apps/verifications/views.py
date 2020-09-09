@@ -35,7 +35,9 @@ class ImageCodeView(View):
         # redis_conn.setex('img_%s' % uuid, constants.IMAGE_CODE_REDIS_EXPIRES, text)
 
         # 响应图片验证码
-        return HttpResponse(image, content_type='image/jpg')
+        response = HttpResponse(image, content_type='image/jpg')
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
 
 
 class SMSCodeView(View):
@@ -110,5 +112,5 @@ class SMSCodeView(View):
 
         response = JsonResponse({'code': RETCODE.OK, 'errmsg': '发送短信成功'})
         # 设置响应头信息, 使其可以跨域
-        response["Access-Control-Allow-Origin"] = '*'
+        # response["Access-Control-Allow-Origin"] = '*'
         return response

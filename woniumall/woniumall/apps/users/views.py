@@ -31,7 +31,9 @@ class RegisterView(View):
     """用户注册"""
 
     def get(self, request):
-        return render(request, 'register.html')
+        response = render(request, 'register.html')
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
 
     def post(self, request):
         """
@@ -106,7 +108,7 @@ class RegisterView(View):
 
         # 登录时用户名写入到cookie，有效期15天
         response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
-
+        # response["Access-Control-Allow-Origin"] = '*'
         return response
 
 
@@ -122,7 +124,9 @@ class UsernameCountView(View):
         """
         count = User.objects.filter(username=username).count()
         # print('1111111')
-        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'count': count})
+        response = JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'count': count})
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
 
 
 class MobileCountView(View):
@@ -135,7 +139,9 @@ class MobileCountView(View):
         :return: JSON
         """
         count = User.objects.filter(mobile=mobile).count()
-        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'count': count})
+        response = JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'count': count})
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
 
 
 class LoginView(View):
@@ -147,7 +153,9 @@ class LoginView(View):
         :param request: 请求对象
         :return: 登录界面
         """
-        return render(request, 'login.html')
+        response = render(request, 'login.html')
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
 
     def post(self, request):
         """
@@ -205,7 +213,7 @@ class LoginView(View):
         else:
             # 登录时用户名写入到cookie，有效期14天
             response.set_cookie('username', user.username, max_age=3600 * 24 * 14)
-
+        # response["Access-Control-Allow-Origin"] = '*'
         return response
 
 
@@ -220,7 +228,7 @@ class LogoutView(View):
         response = redirect('/')
         # 退出登录时清除cookie中的username
         response.delete_cookie('username')
-
+        # response["Access-Control-Allow-Origin"] = '*'
         return response
 
 
@@ -249,7 +257,9 @@ class UserInfoView(LoginRequiredMixin, View):
             'email': request.user.email,
             'email_active': request.user.email_active
         }
-        return render(request, 'user_center_info.html', context=context)
+        response = render(request, 'user_center_info.html', context=context)
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
 
 
 class EmailView(LoginRequireJsonMixin, View):
@@ -298,7 +308,9 @@ class EmailView(LoginRequireJsonMixin, View):
         # send_verify_email.delay(email, verify_url)
 
         # 响应添加邮箱结果
-        return JsonResponse({'code': RETCODE.OK, 'errmsg': '添加邮箱成功'})
+        response = JsonResponse({'code': RETCODE.OK, 'errmsg': '添加邮箱成功'})
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
 
 
 class VerifyEmailView(View):
@@ -326,7 +338,9 @@ class VerifyEmailView(View):
             return HttpResponseServerError('激活邮件失败')
 
         # 返回邮箱验证结果
-        return redirect(reverse('users:info'))
+        response = redirect(reverse('users:info'))
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
 
 
 class ChangePasswordView(LoginRequiredMixin, View):
@@ -334,7 +348,9 @@ class ChangePasswordView(LoginRequiredMixin, View):
 
     def get(self, request):
         """展示修改密码界面"""
-        return render(request, 'user_center_pass.html')
+        response = render(request, 'user_center_pass.html')
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
 
     def post(self, request):
         """实现修改密码逻辑"""
@@ -368,6 +384,7 @@ class ChangePasswordView(LoginRequiredMixin, View):
         logout(request)
         response = redirect('/login/')
         response.delete_cookie('username')
+        # response["Access-Control-Allow-Origin"] = '*'
 
         # # 响应密码修改结果：重定向到登录界面
         return response
@@ -406,7 +423,9 @@ class AddressView(LoginRequiredMixin, View):
             'addresses': address_dict_list,
         }
 
-        return render(request, 'user_center_site.html', context)
+        response = render(request, 'user_center_site.html', context)
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
 
 
 class AreasView(View):
@@ -438,7 +457,7 @@ class AreasView(View):
                 cache.set("province_list", province_list, constants.AREA_CACHE_EXPIRES)
 
             # 响应省份数据
-            return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'province_list': province_list})
+            response = JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'province_list': province_list})
         else:
             # 读取市或区缓存数据
             sub_data = cache.get('sub_area_' + area_id)
@@ -466,7 +485,10 @@ class AreasView(View):
                 cache.set('sub_area_' + area_id, sub_data, constants.AREA_CACHE_EXPIRES)
 
             # 响应市或区数据
-            return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'sub_data': sub_data})
+            response = JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'sub_data': sub_data})
+
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
 
 
 class CreateAddressView(LoginRequireJsonMixin, View):
@@ -541,7 +563,9 @@ class CreateAddressView(LoginRequireJsonMixin, View):
         }
 
         # 响应保存结果
-        return JsonResponse({'code': RETCODE.OK, 'errmsg': '新增地址成功', 'address': address_dict})
+        response = JsonResponse({'code': RETCODE.OK, 'errmsg': '新增地址成功', 'address': address_dict})
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
 
 
 class DefaultAddressView(LoginRequireJsonMixin, View):
@@ -561,7 +585,9 @@ class DefaultAddressView(LoginRequireJsonMixin, View):
             return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '设置默认地址失败'})
 
         # 响应设置默认地址结果
-        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '设置默认地址成功'})
+        response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': '设置默认地址成功'})
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
 
 
 class UpdateTitleAddressView(LoginRequireJsonMixin, View):
@@ -585,5 +611,93 @@ class UpdateTitleAddressView(LoginRequireJsonMixin, View):
             return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '设置地址标题失败'})
 
         # 4.响应删除地址结果
-        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '设置地址标题成功'})
+        response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': '设置地址标题成功'})
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
 
+
+class UpdateDestroyAddressView(LoginRequireJsonMixin, View):
+    """修改和删除地址"""
+
+    def put(self, request, address_id):
+        """修改地址"""
+        # 接收参数
+        json_dict = json.loads(request.body.decode())
+        receiver = json_dict.get('receiver')
+        province_id = json_dict.get('province_id')
+        city_id = json_dict.get('city_id')
+        district_id = json_dict.get('district_id')
+        place = json_dict.get('place')
+        mobile = json_dict.get('mobile')
+        tel = json_dict.get('tel')
+        email = json_dict.get('email')
+
+        # 校验参数
+        if not all([receiver, province_id, city_id, district_id, place, mobile]):
+            return http.HttpResponseForbidden('缺少必传参数')
+        if not re.match(r'^1[3-9]\d{9}$', mobile):
+            return http.HttpResponseForbidden('参数mobile有误')
+        if tel:
+            if not re.match(r'^(0[0-9]{2,3}-)?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$', tel):
+                return http.HttpResponseForbidden('参数tel有误')
+        if email:
+            if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+                return http.HttpResponseForbidden('参数email有误')
+
+        # 判断地址是否存在,并更新地址信息
+        try:
+            Address.objects.filter(id=address_id).update(
+                user=request.user,
+                receiver=receiver,
+                province_id=province_id,
+                city_id=city_id,
+                district_id=district_id,
+                place=place,
+                mobile=mobile,
+                tel=tel,
+                email=email
+            )
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '更新地址失败'})
+
+        # 构造响应数据
+        address = Address.objects.get(id=address_id)
+        address_dict = {
+            "id": address.id,
+            "title": address.title,
+            "receiver": address.receiver,
+            "province": address.province.name,
+            "province_id": address.province_id,
+            "city": address.city.name,
+            "city_id": address.city_id,
+            "district": address.district.name,
+            "district_id": address.district_id,
+            "place": address.place,
+            "mobile": address.mobile,
+            "tel": address.tel,
+            "email": address.email
+        }
+
+        # 响应更新地址结果
+        response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': '更新地址成功', 'address': address_dict})
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
+
+    def delete(self, request, address_id):
+        """删除地址"""
+        try:
+            # 查询要删除的地址
+            address = Address.objects.get(id=address_id)
+
+            # 将地址逻辑删除设置为True
+            address.is_deleted = True
+            address.save()
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '删除地址失败'})
+
+        # 响应删除地址结果
+        response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': '删除地址成功'})
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response

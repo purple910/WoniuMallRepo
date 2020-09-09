@@ -8,4 +8,6 @@ class HomeView(View):
     """首页"""
 
     def get(self, request):
-        return render(request, 'index.html')
+        response = render(request, 'index.html')
+        # response["Access-Control-Allow-Origin"] = '*'
+        return response
