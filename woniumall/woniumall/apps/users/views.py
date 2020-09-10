@@ -358,15 +358,19 @@ class ChangePasswordView(LoginRequiredMixin, View):
         old_password = request.POST.get('old_pwd')
         new_password = request.POST.get('new_pwd')
         new_password2 = request.POST.get('new_cpwd')
+        isPwd = False
 
         # 校验参数
         if not all([old_password, new_password, new_password2]):
             return HttpResponseForbidden('缺少必传参数')
         try:
-            request.user.check_password(old_password)
+            isPwd = request.user.check_password(old_password)
         except Exception as e:
             logger.error(e)
+
+        if not isPwd:
             return render(request, 'user_center_pass.html', {'origin_pwd_errmsg': '原始密码错误'})
+
         if not re.match(r'^[0-9A-Za-z]{8,20}$', new_password):
             return HttpResponseForbidden('密码最少8位，最长20位')
         if new_password != new_password2:
@@ -504,6 +508,7 @@ class CreateAddressView(LoginRequireJsonMixin, View):
 
         # 接收参数
         json_dict = json.loads(request.body.decode())
+        json_dict = request.POST
         receiver = json_dict.get('receiver')
         province_id = json_dict.get('province_id')
         city_id = json_dict.get('city_id')
